@@ -11,6 +11,7 @@
     "generate:importmap": "payload generate:importmap"
   },
   "dependencies": {
+    "@azure/storage-blob": "^12.31.0",
     "@payloadcms/db-mongodb": "3.79.0",
     "@payloadcms/next": "3.79.0",
     "@payloadcms/richtext-lexical": "3.79.0",
