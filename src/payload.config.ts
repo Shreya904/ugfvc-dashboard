@@ -7,6 +7,7 @@ import { Documents } from "./collections/Documents";
 import { Media } from "./collections/Media";
 import { News } from "./collections/News";
 import { Users } from "./collections/Users";
+import { Events } from "./collections/Events"; // ✅ ADD THIS
 
 const parseOrigins = (value?: string): string[] => {
   if (!value) {
@@ -28,6 +29,7 @@ const localDevOrigins = [
 
 const serverURL = process.env.PAYLOAD_PUBLIC_SERVER_URL;
 const configuredOrigins = parseOrigins(process.env.PAYLOAD_ALLOWED_ORIGINS);
+
 const allowedOrigins = Array.from(
   new Set([
     ...(serverURL ? [serverURL] : []),
@@ -48,5 +50,14 @@ export default buildConfig({
   db: mongooseAdapter({
     url: process.env.MONGODB_URI || "",
   }),
-  collections: [Users, Media, News, Documents, ContactSubmissions],
+
+  // ✅ UPDATED COLLECTIONS
+  collections: [
+    Users,
+    Media,
+    News,
+    Events, // 👈 ADD HERE
+    Documents,
+    ContactSubmissions,
+  ],
 });

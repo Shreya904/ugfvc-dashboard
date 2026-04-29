@@ -11,21 +11,21 @@ const toSlug = (value: string): string =>
 const normalizeCategory = (value: string): string =>
   value.trim().replace(/\s+/g, " ");
 
-export const News: CollectionConfig = {
-  slug: "news",
+export const Events: CollectionConfig = {
+  slug: "events",
   labels: {
-    singular: "Noticia",
-    plural: "Noticias",
+    singular: "Evento",
+    plural: "Eventos",
   },
+
   admin: {
     useAsTitle: "title",
-    defaultColumns: ["title", "date", "category", "isPublished"],
+    defaultColumns: ["title", "date", "location", "isPublished"],
   },
+
   access: {
     read: ({ req }) => {
-      if (req.user) {
-        return true;
-      }
+      if (req.user) return true;
 
       return {
         isPublished: {
@@ -37,12 +37,11 @@ export const News: CollectionConfig = {
     update: ({ req }) => Boolean(req.user),
     delete: ({ req }) => Boolean(req.user),
   },
+
   hooks: {
     beforeValidate: [
       ({ data }) => {
-        if (!data) {
-          return data;
-        }
+        if (!data) return data;
 
         if (!data.slug && typeof data.title === "string") {
           return {
@@ -54,24 +53,28 @@ export const News: CollectionConfig = {
         return data;
       },
     ],
+
     beforeChange: [
       ({ data }) => {
-        if (!data || typeof data.category !== "string") {
-          return data;
-        }
+        if (!data) return data;
 
         return {
           ...data,
-          category: normalizeCategory(data.category),
+          category:
+            typeof data.category === "string"
+              ? normalizeCategory(data.category)
+              : data.category,
         };
       },
     ],
   },
+
   fields: [
+    // 🔹 BASIC INFO
     {
       name: "title",
       type: "text",
-      label: "Titulo",
+      label: "Título",
       required: true,
     },
     {
@@ -82,6 +85,8 @@ export const News: CollectionConfig = {
       index: true,
       required: true,
     },
+
+    // 🔹 CONTENT
     {
       name: "excerpt",
       type: "textarea",
@@ -91,44 +96,16 @@ export const News: CollectionConfig = {
     {
       name: "description",
       type: "richText",
-      label: "Descricao",
-      hooks: {
-        beforeChange: [
-          ({ value }) => value, // keep original richText untouched
-        ],
-        afterRead: [
-          ({ value }) => {
-            if (!value || typeof value !== "object") return value;
-
-            const extractText = (input: any): string => {
-              if (!input?.root?.children) return "";
-
-              const walk = (nodes: any[]): string =>
-                nodes
-                  .map((n) => {
-                    if (typeof n?.text === "string") return n.text;
-                    if (Array.isArray(n?.children)) return walk(n.children);
-                    return "";
-                  })
-                  .join("\n");
-
-              return walk(input.root.children).trim();
-            };
-
-            return {
-              ...value,
-              plainText: extractText(value),
-            };
-          },
-        ],
-      },
+      label: "Descrição completa",
     },
+
+    // 🔹 EVENT META (THIS MATCHES YOUR UI)
     {
       name: "date",
       type: "date",
       label: "Data",
-      index: true,
       required: true,
+      index: true,
       admin: {
         date: {
           pickerAppearance: "dayOnly",
@@ -136,24 +113,48 @@ export const News: CollectionConfig = {
       },
     },
     {
-      name: "category",
+      name: "time",
       type: "text",
-      label: "Categoria",
+      label: "Hora (ex: 18:00 - 20:00)",
       required: true,
     },
     {
+      name: "location",
+      type: "text",
+      label: "Localização",
+      required: true,
+    },
+    {
+      name: "category",
+      type: "text", // ✅ free input as you wanted
+      label: "Categoria",
+      required: true,
+    },
+
+    // 🔹 OPTIONAL FLAG (helps your filter logic)
+    {
+      name: "isPast",
+      type: "checkbox",
+      label: "Evento passado",
+      defaultValue: false,
+    },
+
+    // 🔹 MEDIA
+    {
       name: "mainImage",
       type: "relationship",
-      label: "Imagem principal",
       relationTo: "media",
+      label: "Imagem principal",
     },
     {
       name: "galleryImages",
       type: "relationship",
-      label: "Galeria de imagens",
       relationTo: "media",
       hasMany: true,
+      label: "Galeria de imagens",
     },
+
+    // 🔹 PUBLISHING
     {
       name: "isPublished",
       type: "checkbox",
@@ -166,15 +167,17 @@ export const News: CollectionConfig = {
       type: "date",
       label: "Publicado em",
     },
+
+    // 🔹 SEO (same as news)
     {
       name: "seoTitle",
       type: "text",
-      label: "Titulo SEO",
+      label: "Título SEO",
     },
     {
       name: "seoDescription",
       type: "textarea",
-      label: "Descricao SEO",
+      label: "Descrição SEO",
     },
   ],
 };
