@@ -11,7 +11,18 @@ export const Media: CollectionConfig = {
 
   access: {
     read: () => true,
-    create: ({ req }) => Boolean(req.user),
+
+    create: ({ req }) => {
+      // Admin users always allowed
+      if (req.user) return true;
+
+      const origin = req.headers.get("origin");
+
+      const allowedOrigins = process.env.FRONTEND_ORIGINS?.split(",") || [];
+
+      return allowedOrigins.includes(origin || "");
+    },
+
     update: ({ req }) => Boolean(req.user),
     delete: ({ req }) => Boolean(req.user),
   },
@@ -26,7 +37,6 @@ export const Media: CollectionConfig = {
       async ({ req, data }) => {
         const file = (req as any).file;
 
-        // No file → just continue normal flow
         if (!file) return data;
 
         const uploaded = await uploadToAzureSAS(

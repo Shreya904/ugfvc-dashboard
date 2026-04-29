@@ -2,20 +2,24 @@ import type { CollectionConfig } from "payload";
 
 export const ContactSubmissions: CollectionConfig = {
   slug: "contact-submissions",
+
   labels: {
     singular: "Submissao de contacto",
     plural: "Submissoes de contacto",
   },
+
   admin: {
     useAsTitle: "email",
     defaultColumns: ["name", "email", "category", "status", "submittedAt"],
   },
+
   access: {
     create: () => true,
     read: ({ req }) => Boolean(req.user),
     update: ({ req }) => Boolean(req.user),
     delete: ({ req }) => Boolean(req.user),
   },
+
   fields: [
     {
       name: "name",
@@ -23,12 +27,14 @@ export const ContactSubmissions: CollectionConfig = {
       label: "Nome",
       required: true,
     },
+
     {
       name: "email",
       type: "email",
       label: "Email",
       required: true,
     },
+
     {
       name: "category",
       type: "select",
@@ -42,6 +48,7 @@ export const ContactSubmissions: CollectionConfig = {
         "Outras Questoes",
       ],
     },
+
     {
       name: "message",
       type: "textarea",
@@ -49,32 +56,53 @@ export const ContactSubmissions: CollectionConfig = {
       required: true,
       maxLength: 1000,
     },
+
+    // 📎 Media relationship (stored file reference)
     {
       name: "attachment",
       type: "relationship",
       label: "Anexo",
       relationTo: "media",
+      admin: {
+        allowCreate: false,
+      },
     },
+
+    // ⚡ Admin preview (FIXED — no JSX here)
+    {
+      name: "attachmentPreview",
+      type: "ui",
+      admin: {
+        components: {
+          Field: "app/(payload)/admin/AttachmentPreview",
+        },
+      },
+    },
+
     {
       name: "attachmentUrl",
       type: "text",
       label: "URL do anexo",
     },
+
     {
       name: "sourcePage",
       type: "text",
       label: "Pagina de origem",
     },
+
     {
       name: "locale",
       type: "text",
       label: "Idioma",
     },
+
     {
       name: "consent",
       type: "checkbox",
       label: "Consentimento",
     },
+
     {
       name: "status",
       type: "select",
@@ -82,29 +110,19 @@ export const ContactSubmissions: CollectionConfig = {
       required: true,
       defaultValue: "new",
       options: [
-        {
-          label: "Novo",
-          value: "new",
-        },
-        {
-          label: "Em analise",
-          value: "in_review",
-        },
-        {
-          label: "Resolvido",
-          value: "resolved",
-        },
-        {
-          label: "Arquivado",
-          value: "archived",
-        },
+        { label: "Novo", value: "new" },
+        { label: "Em analise", value: "in_review" },
+        { label: "Resolvido", value: "resolved" },
+        { label: "Arquivado", value: "archived" },
       ],
     },
+
     {
       name: "internalNotes",
       type: "textarea",
       label: "Notas internas",
     },
+
     {
       name: "submittedAt",
       type: "date",
