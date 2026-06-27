@@ -8,9 +8,6 @@ const toSlug = (value: string): string =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 
-const normalizeCategory = (value: string): string =>
-  value.trim().replace(/\s+/g, " ");
-
 export const Events: CollectionConfig = {
   slug: "events",
   labels: {
@@ -20,13 +17,18 @@ export const Events: CollectionConfig = {
 
   admin: {
     useAsTitle: "title",
-    defaultColumns: ["title", "date", "location", "isPublished"],
+    defaultColumns: [
+      "title",
+      "date",
+      "categoryTop",
+      "priceType",
+      "isPublished",
+    ],
   },
 
   access: {
     read: ({ req }) => {
       if (req.user) return true;
-
       return {
         isPublished: {
           equals: true,
@@ -53,20 +55,6 @@ export const Events: CollectionConfig = {
         return data;
       },
     ],
-
-    beforeChange: [
-      ({ data }) => {
-        if (!data) return data;
-
-        return {
-          ...data,
-          category:
-            typeof data.category === "string"
-              ? normalizeCategory(data.category)
-              : data.category,
-        };
-      },
-    ],
   },
 
   fields: [
@@ -84,32 +72,75 @@ export const Events: CollectionConfig = {
       unique: true,
       index: true,
       required: true,
+      admin: {
+        position: "sidebar",
+      },
+    },
+
+    // 🔹 FILTERS & CATEGORIES (Aligns with Frontend)
+    {
+      type: "row",
+      fields: [
+        {
+          name: "categoryTop",
+          type: "select",
+          label: "Tipo de Evento",
+          required: true,
+          options: [
+            { label: "Exposições", value: "Exposições" },
+            {
+              label: "Atividades ao ar livre",
+              value: "Atividades ao ar livre",
+            },
+            { label: "Mercados", value: "Mercados" },
+          ],
+        },
+        {
+          name: "priceType",
+          type: "select",
+          label: "Preço",
+          required: true,
+          options: [
+            { label: "Gratuito", value: "Gratuito" },
+            { label: "A pagar", value: "A pagar" },
+          ],
+        },
+      ],
     },
 
     // 🔹 CONTENT
     {
       name: "excerpt",
       type: "textarea",
-      label: "Resumo",
+      label: "Resumo (Aparece no card)",
       required: true,
     },
     {
       name: "description",
       type: "richText",
-      label: "Descrição completa",
+      label: "Descrição completa (Aparece na página do evento)",
     },
 
-    // 🔹 EVENT META (THIS MATCHES YOUR UI)
+    // 🔹 EVENT META
     {
       name: "date",
       type: "date",
-      label: "Data",
+      label: "Data exata (Usado para ordenação e filtros de tempo)",
       required: true,
       index: true,
       admin: {
         date: {
           pickerAppearance: "dayOnly",
         },
+      },
+    },
+    {
+      name: "displayDate",
+      type: "text",
+      label: "Data de Exibição (Opcional)",
+      admin: {
+        description:
+          "Ex: '24 março a 25 de abril' ou 'Segundas-feiras'. Se deixado em branco, a 'Data exata' será mostrada.",
       },
     },
     {
@@ -125,18 +156,24 @@ export const Events: CollectionConfig = {
       required: true,
     },
     {
-      name: "category",
-      type: "text", // ✅ free input as you wanted
-      label: "Categoria",
-      required: true,
+      name: "registrationLink",
+      type: "text",
+      label: "Link de Inscrição (Opcional)",
+      admin: {
+        description:
+          "Deixe em branco para usar o padrão '/inscricoes'. Pode ser um link externo.",
+      },
     },
 
-    // 🔹 OPTIONAL FLAG (helps your filter logic)
+    // 🔹 OPTIONAL FLAG
     {
       name: "isPast",
       type: "checkbox",
       label: "Evento passado",
       defaultValue: false,
+      admin: {
+        position: "sidebar",
+      },
     },
 
     // 🔹 MEDIA
@@ -154,30 +191,28 @@ export const Events: CollectionConfig = {
       label: "Galeria de imagens",
     },
 
-    // 🔹 PUBLISHING
+    // 🔹 PUBLISHING & SEO
     {
       name: "isPublished",
       type: "checkbox",
       label: "Publicado",
       defaultValue: true,
       index: true,
+      admin: {
+        position: "sidebar",
+      },
     },
-    {
-      name: "publishedAt",
-      type: "date",
-      label: "Publicado em",
-    },
-
-    // 🔹 SEO (same as news)
     {
       name: "seoTitle",
       type: "text",
       label: "Título SEO",
+      admin: { position: "sidebar" },
     },
     {
       name: "seoDescription",
       type: "textarea",
       label: "Descrição SEO",
+      admin: { position: "sidebar" },
     },
   ],
 };

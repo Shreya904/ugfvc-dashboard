@@ -1,6 +1,17 @@
 import React from "react";
 
-export default function AttachmentPreview({ data }: any) {
+type AttachmentMedia = {
+  filename?: string;
+  url?: string;
+};
+
+type AttachmentPreviewProps = {
+  data?: {
+    attachment?: AttachmentMedia | string | number | null;
+  };
+};
+
+export default function AttachmentPreview({ data }: AttachmentPreviewProps) {
   const media = data?.attachment;
 
   if (!media) {
@@ -12,7 +23,7 @@ export default function AttachmentPreview({ data }: any) {
     typeof media === "object" ? media.filename : `Media ID: ${media}`;
 
   if (!url) {
-    return <p style={{ opacity: 0.6 }}>📎 {filename} (ver em Media)</p>;
+    return <p style={{ opacity: 0.6 }}>Anexo: {filename} (ver em Media)</p>;
   }
 
   return (
@@ -26,7 +37,7 @@ export default function AttachmentPreview({ data }: any) {
         fontWeight: 500,
       }}
     >
-      📎 Abrir anexo ({filename})
+      Abrir anexo ({filename})
     </a>
   );
 }

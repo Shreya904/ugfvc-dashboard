@@ -7,7 +7,9 @@ import { Documents } from "./collections/Documents";
 import { Media } from "./collections/Media";
 import { News } from "./collections/News";
 import { Users } from "./collections/Users";
-import { Events } from "./collections/Events"; // ✅ ADD THIS
+import { Events } from "./collections/Events";
+import { Places } from "./collections/Places";
+import { UsefulContacts } from "./collections/Contacts-uteis";
 
 const parseOrigins = (value?: string): string[] => {
   if (!value) {
@@ -56,8 +58,10 @@ export default buildConfig({
     Users,
     Media,
     News,
-    Events, // 👈 ADD HERE
+    Events,
     Documents,
     ContactSubmissions,
+    Places,
+    UsefulContacts,
   ],
 });
