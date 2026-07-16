@@ -10,6 +10,9 @@ import { Users } from "./collections/Users";
 import { Events } from "./collections/Events";
 import { Places } from "./collections/Places";
 import { UsefulContacts } from "./collections/Contacts-uteis";
+import { HeroSlider } from "./collections/HeroSlider";
+import { Executivo } from "./collections/Executivo";
+import { SiteBanners } from "./collections/SiteBanners";
 
 const parseOrigins = (value?: string): string[] => {
   if (!value) {
@@ -63,5 +66,8 @@ export default buildConfig({
     ContactSubmissions,
     Places,
     UsefulContacts,
+    HeroSlider,
+    Executivo,
+    SiteBanners,
   ],
 });
