@@ -1,5 +1,7 @@
 import type { CollectionConfig } from "payload";
 
+import { limitFeatured } from "../hooks/limitFeatured";
+
 const toSlug = (value: string): string =>
   value
     .toLowerCase()
@@ -33,6 +35,7 @@ export const Places: CollectionConfig = {
     delete: ({ req }) => Boolean(req.user),
   },
   hooks: {
+    beforeChange: [limitFeatured("places")],
     beforeValidate: [
       ({ data }) => {
         if (!data) return data;
@@ -101,10 +104,20 @@ export const Places: CollectionConfig = {
                     // Natureza
                     { label: "Espaços urbanos", value: "Espaços urbanos" },
                     { label: "Vida selvagem", value: "Vida selvagem" },
-                    { label: "Observatórios", value: "Observatórios" }, // Normalized to match frontend filter
+                    { label: "Observatórios", value: "Observatórios" },
                   ],
                 },
               ],
+            },
+            {
+              name: "image",
+              type: "relationship",
+              relationTo: "media",
+              label: "Imagem de Destaque (Opcional)",
+              admin: {
+                description:
+                  "Imagem que aparecerá no topo do cartão do espaço.",
+              },
             },
           ],
         },
@@ -115,7 +128,7 @@ export const Places: CollectionConfig = {
               name: "address",
               type: "text",
               label: "Morada",
-              required: true, // Made required as per your TS Interface, physical places usually need this
+              required: true,
             },
             {
               type: "row",
@@ -136,6 +149,15 @@ export const Places: CollectionConfig = {
               ],
             },
             {
+              name: "locationUrl",
+              type: "text",
+              label: "Link do Mapa / Localização (Opcional)",
+              admin: {
+                description:
+                  "Ex: Link do Google Maps (https://maps.app.goo.gl/...)",
+              },
+            },
+            {
               name: "schedule",
               type: "text",
               label: "Horário (Opcional)",
@@ -152,6 +174,16 @@ export const Places: CollectionConfig = {
       type: "checkbox",
       label: "Publicado",
       defaultValue: true,
+      index: true,
+      admin: {
+        position: "sidebar",
+      },
+    },
+    {
+      name: "isFeatured",
+      type: "checkbox",
+      label: "Em destaque",
+      defaultValue: false,
       index: true,
       admin: {
         position: "sidebar",

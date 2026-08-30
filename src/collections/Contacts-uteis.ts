@@ -1,5 +1,7 @@
 import type { CollectionConfig } from "payload";
 
+import { limitFeatured } from "../hooks/limitFeatured";
+
 const toSlug = (value: string): string =>
   value
     .toLowerCase()
@@ -39,6 +41,7 @@ export const UsefulContacts: CollectionConfig = {
     delete: ({ req }) => Boolean(req.user),
   },
   hooks: {
+    beforeChange: [limitFeatured("useful-contacts")],
     beforeValidate: [
       ({ data }) => {
         if (!data) return data;
@@ -91,6 +94,7 @@ export const UsefulContacts: CollectionConfig = {
                     { label: "Segurança", value: "Segurança" },
                     { label: "Ensino", value: "Ensino" },
                     { label: "Associações", value: "Associações" },
+                    { label: "Social", value: "Social" },
                   ],
                 },
                 {
@@ -121,6 +125,11 @@ export const UsefulContacts: CollectionConfig = {
                     { label: "Cultura", value: "Cultura" },
                     { label: "Desporto", value: "Desporto" },
                     { label: "Comercial", value: "Comercial" },
+                    // Social
+                    { label: "Social", value: "Social" },
+                    { label: "Linhas de Apoio", value: "Linhas de Apoio" },
+                    { label: "IPSS", value: "IPSS" },
+                    { label: "Transportes", value: "Transportes" },
                   ],
                 },
               ],
@@ -180,6 +189,16 @@ export const UsefulContacts: CollectionConfig = {
       type: "checkbox",
       label: "Publicado",
       defaultValue: true,
+      index: true,
+      admin: {
+        position: "sidebar",
+      },
+    },
+    {
+      name: "isFeatured",
+      type: "checkbox",
+      label: "Em destaque",
+      defaultValue: false,
       index: true,
       admin: {
         position: "sidebar",

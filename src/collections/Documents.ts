@@ -1,5 +1,7 @@
 import type { CollectionConfig } from "payload";
 
+import { limitFeatured } from "../hooks/limitFeatured";
+
 const toSlug = (value: string): string =>
   value
     .toLowerCase()
@@ -43,6 +45,7 @@ export const Documents: CollectionConfig = {
     delete: ({ req }) => Boolean(req.user),
   },
   hooks: {
+    beforeChange: [limitFeatured("documents")],
     beforeValidate: [
       ({ data }) => {
         if (!data) {
@@ -243,6 +246,16 @@ export const Documents: CollectionConfig = {
       type: "checkbox",
       label: "Publicado",
       defaultValue: true,
+      index: true,
+      admin: {
+        position: "sidebar",
+      },
+    },
+    {
+      name: "isFeatured",
+      type: "checkbox",
+      label: "Em destaque",
+      defaultValue: false,
       index: true,
       admin: {
         position: "sidebar",

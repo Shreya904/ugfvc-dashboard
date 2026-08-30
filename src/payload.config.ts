@@ -13,6 +13,11 @@ import { UsefulContacts } from "./collections/Contacts-uteis";
 import { HeroSlider } from "./collections/HeroSlider";
 import { Executivo } from "./collections/Executivo";
 import { SiteBanners } from "./collections/SiteBanners";
+import { MesaAssembleia } from "./collections/MesaAssembleia";
+
+// 🔹 Import the globals
+import { ReunioesAssembleia } from "./collections/ReunioesAssembleia";
+import { ReunioesExecutivo } from "./collections/ReunioesExecutivo";
 
 const parseOrigins = (value?: string): string[] => {
   if (!value) {
@@ -56,7 +61,7 @@ export default buildConfig({
     url: process.env.MONGODB_URI || "",
   }),
 
-  // ✅ UPDATED COLLECTIONS
+  // 🔹 Collections (Repeating data)
   collections: [
     Users,
     Media,
@@ -69,5 +74,9 @@ export default buildConfig({
     HeroSlider,
     Executivo,
     SiteBanners,
+    MesaAssembleia,
   ],
+
+  // 🔹 Globals (Single, unique pages/settings)
+  globals: [ReunioesExecutivo, ReunioesAssembleia],
 });

@@ -28,7 +28,13 @@ export const Media: CollectionConfig = {
   },
 
   upload: {
-    mimeTypes: ["image/*", "application/pdf"],
+    // 🔹 Added audio/* for mp3s and the specific mime type for .odt
+    mimeTypes: [
+      "image/*",
+      "application/pdf",
+      "audio/*",
+      "application/vnd.oasis.opendocument.text",
+    ],
     disableLocalStorage: true,
   },
 

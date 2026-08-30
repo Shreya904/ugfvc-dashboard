@@ -1,5 +1,7 @@
 import type { CollectionConfig } from "payload";
 
+import { limitFeatured } from "../hooks/limitFeatured";
+
 const toSlug = (value: string): string =>
   value
     .toLowerCase()
@@ -41,6 +43,7 @@ export const Events: CollectionConfig = {
   },
 
   hooks: {
+    beforeChange: [limitFeatured("events")],
     beforeValidate: [
       ({ data }) => {
         if (!data) return data;
@@ -77,7 +80,6 @@ export const Events: CollectionConfig = {
       },
     },
 
-    // 🔹 FILTERS & CATEGORIES (Aligns with Frontend)
     {
       type: "row",
       fields: [
@@ -92,7 +94,13 @@ export const Events: CollectionConfig = {
               label: "Atividades ao ar livre",
               value: "Atividades ao ar livre",
             },
-            { label: "Mercados", value: "Mercados" },
+            { label: "Feiras e Mercados", value: "Mercados" }, // Mantém o value "Mercados" para não quebrar a DB
+            { label: "Música e Espetáculos", value: "Música e Espetáculos" },
+            { label: "Desporto", value: "Desporto" },
+            { label: "Cultura e Património", value: "Cultura e Património" },
+            { label: "Educação e Ciência", value: "Educação e Ciência" },
+            { label: "Solidariedade", value: "Solidariedade" },
+            { label: "Religião e Tradições", value: "Religião e Tradições" },
           ],
         },
         {
@@ -197,6 +205,16 @@ export const Events: CollectionConfig = {
       type: "checkbox",
       label: "Publicado",
       defaultValue: true,
+      index: true,
+      admin: {
+        position: "sidebar",
+      },
+    },
+    {
+      name: "isFeatured",
+      type: "checkbox",
+      label: "Em destaque",
+      defaultValue: false,
       index: true,
       admin: {
         position: "sidebar",
