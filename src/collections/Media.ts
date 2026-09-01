@@ -1,5 +1,5 @@
 import type { CollectionConfig } from "payload";
-import { uploadToAzureSAS } from "../storage/azureSas";
+import { uploadToLocalDisk } from "../storage/localDisk";
 
 export const Media: CollectionConfig = {
   slug: "media",
@@ -39,13 +39,20 @@ export const Media: CollectionConfig = {
   },
 
   hooks: {
+    afterRead: [
+      ({ doc }) => {
+        const base = (process.env.MEDIA_BASE_URL || "").replace(/\/+$/, "");
+        if (doc?.filename && base) doc.url = base + "/" + doc.filename;
+        return doc;
+      },
+    ],
     beforeChange: [
       async ({ req, data }) => {
         const file = (req as any).file;
 
         if (!file) return data;
 
-        const uploaded = await uploadToAzureSAS(
+        const uploaded = await uploadToLocalDisk(
           file.data,
           file.name,
           file.mimetype,
