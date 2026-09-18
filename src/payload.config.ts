@@ -18,6 +18,7 @@ import { MesaAssembleia } from "./collections/MesaAssembleia";
 // 🔹 Import the globals
 import { ReunioesAssembleia } from "./collections/ReunioesAssembleia";
 import { ReunioesExecutivo } from "./collections/ReunioesExecutivo";
+import proposals from "./collections/proposals";
 
 const parseOrigins = (value?: string): string[] => {
   if (!value) {
@@ -75,6 +76,7 @@ export default buildConfig({
     Executivo,
     SiteBanners,
     MesaAssembleia,
+    proposals,
   ],
 
   // 🔹 Globals (Single, unique pages/settings)
