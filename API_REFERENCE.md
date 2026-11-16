@@ -1,256 +1,162 @@
 # API and Function Reference
 
-Last reanalysis: 2026-04-27
-Project: uniaodefreguesias-cms
-Stack: Next.js App Router + Payload CMS v3.79.0
-
-## 1) API gateway and base paths
-
-All REST API requests are handled by a catch-all Payload route:
-
-- Route file: app/(payload)/api/[...slug]/route.ts
-- Public base path: /api/\*
-- Enabled HTTP methods: GET, POST, DELETE, PATCH, PUT, OPTIONS
-
-Because this project uses Payload REST handlers, collection endpoints are available under `/api/<collection-slug>`.
-
-Admin UI routes are separate:
-
-- /admin
-- /admin/\*
-
-Site route currently:
-
-- /
-
-## 2) Collection slugs available in this project
-
-From Payload config, active collections are:
-
-- users
-- media
-- news
-- documents
-- contact-submissions
-
-## 3) REST endpoints you can use
-
-Use these endpoint patterns for each collection slug listed above.
-
-### 3.1 Collection list/create
-
-- GET /api/<slug>
-  - List documents with filtering/pagination query params.
-- POST /api/<slug>
-  - Create a document.
-
-Common useful query params on list endpoints:
-
-- `page`, `limit`, `sort`, `where`, `depth`, `locale`, `fallback-locale`, `draft`
-
-### 3.2 Single document read/update/delete
-
-- GET /api/<slug>/<id>
-  - Get one document by id.
-- PATCH /api/<slug>/<id>
-  - Partial update.
-- PUT /api/<slug>/<id>
-  - Full update semantics.
-- DELETE /api/<slug>/<id>
-  - Delete one document.
-
-### 3.3 Auth endpoints (users collection)
-
-Because `users` has `auth: true`, these auth endpoints are exposed under `/api/users/*`:
-
-- POST /api/users/login
-- POST /api/users/logout
-- GET /api/users/me
-- POST /api/users/refresh-token
-- POST /api/users/forgot-password
-- POST /api/users/reset-password
-
-Note: some flows (for example forgot/reset email delivery) depend on environment and email setup.
-
-## 4) Collection-specific behavior and access control
-
-This section is critical for correct endpoint usage: requests may be allowed/denied or mutated by these functions.
-
-### 4.1 users
-
-- Slug: `users`
-- Auth enabled: yes
-- Key fields: `name`, `role` (default `editor`)
-
-Behavior notes:
-
-- `role` defaults to `editor` when omitted.
-- Admin user collection is configured to `users`.
-
-### 4.2 media
-
-- Slug: `media`
-- Upload enabled: yes
-- Allowed mime types: `image/*`, `application/pdf`
-
-Access rules:
-
-- Read: public
-- Create/Update/Delete: authenticated user required
-
-Usage note:
-
-- Upload with `POST /api/media` using multipart/form-data.
-
-### 4.3 news
-
-- Slug: `news`
-
-Access rules:
-
-- Read:
-  - Authenticated users can read all.
-  - Public users only read documents where `isPublished = true`.
-- Create/Update/Delete: authenticated user required.
-
-Hook functions:
-
-- beforeValidate:
-  - If `slug` is missing and `title` exists, sets `slug = toSlug(title)`.
-- beforeChange:
-  - Normalizes `category` by trimming and collapsing repeated spaces.
-
-Utility functions used by hooks:
-
-- `toSlug(value)`:
-  - lowercases, removes diacritics, replaces non-alphanumeric runs with `-`, trims leading/trailing `-`.
-- `normalizeCategory(value)`:
-  - trims text and reduces internal whitespace to a single space.
-
-### 4.4 documents
-
-- Slug: `documents`
-
-Access rules:
-
-- Read:
-  - Authenticated users can read all.
-  - Public users only read documents where `isPublished = true`.
-- Create/Update/Delete: authenticated user required.
-
-Hook functions:
-
-- beforeValidate:
-  - If `slug` is missing and `title` exists, sets `slug = toSlug(title)`.
-
-Validation functions:
-
-- `sourceUrl.validate(value)`:
-  - Accepts only valid `http://` or `https://` URLs.
-
-Utility functions:
-
-- `toSlug(value)`:
-  - same normalization behavior as in `news`.
-- `isLikelyUrl(value)`:
-  - parses URL and accepts only `http:`/`https:` protocols.
-
-### 4.5 contact-submissions
-
-- Slug: `contact-submissions`
-
-Access rules:
-
-- Create: public
-- Read/Update/Delete: authenticated user required
-
-Defaulting behavior:
-
-- `status` defaults to `new`.
-- `submittedAt` defaults to `new Date().toISOString()`.
-
-Implication:
-
-- Public contact form can submit via POST.
-- Public users cannot list or read submissions.
-
-## 5) Global config functions affecting API behavior
-
-From `src/payload.config.ts`:
-
-- `parseOrigins(value)`:
-  - Splits comma-separated origin list, trims entries, removes empties.
-- CORS/CSRF allowed origins are built from:
-  - `PAYLOAD_PUBLIC_SERVER_URL`
-  - local dev defaults (`localhost:3000/3001`, `127.0.0.1:3000/3001`)
-  - `PAYLOAD_ALLOWED_ORIGINS`
-
-Impact:
-
-- Cross-origin API calls must come from configured origins.
-
-## 6) Endpoint quick examples
-
-### 6.1 Public: list published news
-
-Request:
-
-- GET /api/news?where[isPublished][equals]=true&sort=-date&limit=10
-
-### 6.2 Public: create contact submission
-
-Request:
-
-- POST /api/contact-submissions
-- Content-Type: application/json
-
-Body example:
-
+Project: `uniaodefreguesias-cms`
+Stack: Next.js App Router, Payload CMS 3.79.0, MongoDB
+
+## Base routes
+
+The catch-all route in `app/(payload)/api/[...slug]/route.ts` exposes Payload
+REST handlers under `/api/*` for `GET`, `POST`, `PATCH`, `PUT`, `DELETE`, and
+`OPTIONS`.
+
+- Administration: `/admin` and `/admin/*`
+- Collections: `/api/<collection-slug>`
+- Globals: `/api/globals/<global-slug>`
+
+Standard collection operations are:
+
+```text
+GET    /api/<slug>          list documents
+POST   /api/<slug>          create a document
+GET    /api/<slug>/<id>     read one document
+PATCH  /api/<slug>/<id>     partially update
+PUT    /api/<slug>/<id>     replace/update
+DELETE /api/<slug>/<id>     delete one document
+```
+
+List requests can use Payload query parameters such as `page`, `limit`, `sort`,
+`where`, `depth`, `locale`, `fallback-locale`, and `draft`.
+
+## Collections
+
+| Slug | Purpose | Public read | Write access |
+|---|---|---:|---|
+| `users` | Authenticated CMS users | No | No explicit collection rule |
+| `media` | Uploaded files and media metadata | Yes | Authenticated users, or anonymous requests from `FRONTEND_ORIGINS` for create |
+| `news` | News articles | Published only | Authenticated users |
+| `events` | Events | Published only | Authenticated users |
+| `documents` | Documents and external resources | Published only | Authenticated users |
+| `contact-submissions` | Public contact form submissions | No | Create is public; read/update/delete require authentication |
+| `places` | Places to visit | Published only | Authenticated users |
+| `useful-contacts` | Useful public contacts | Published only | Authenticated users |
+| `hero-slider` | Homepage slider configurations | Yes | No explicit collection rule |
+| `executivo` | Executive members | Yes | No explicit collection rule |
+| `site-banners` | Website banner content | Yes | No explicit collection rule |
+| `mesa-assembleia` | Assembly board members | Yes | No explicit collection rule |
+| `propostas` | Public proposals | Yes | No explicit collection rule |
+
+For collections marked “Published only”, anonymous reads are constrained to
+`isPublished = true`; authenticated users can read all records.
+“No explicit collection rule” means the collection does not define an
+operation-specific access function in its config; confirm the effective Payload
+default before exposing write operations to an untrusted client.
+
+## Globals
+
+Globals are singleton documents and use the following routes:
+
+```text
+GET /api/globals/reunioes-executivo
+GET /api/globals/reunioes-assembleia
+```
+
+Both globals are publicly readable and contain introductory rich text plus
+meeting documents, including dates, formats, topics, tags, media references,
+and optional source URLs.
+
+## Authentication
+
+The `users` collection has Payload authentication enabled:
+
+```text
+POST /api/users/login
+POST /api/users/logout
+GET  /api/users/me
+POST /api/users/refresh-token
+POST /api/users/forgot-password
+POST /api/users/reset-password
+```
+
+Forgot/reset email delivery requires the corresponding email configuration.
+Use the authenticated session or token when calling protected endpoints.
+
+## Media uploads
+
+`media` accepts `image/*`, `application/pdf`, `audio/*`, and
+`application/vnd.oasis.opendocument.text`.
+
+```text
+POST /api/media
+Content-Type: multipart/form-data
+file=<binary file>
+alt=<optional text>
+caption=<optional text>
+```
+
+Media reads are public. Authenticated users can update or delete media.
+Anonymous creation is allowed only when the request `Origin` exactly matches
+one of the comma-separated values in `FRONTEND_ORIGINS`.
+
+Files are written to `MEDIA_DIR` with a unique generated filename. If
+`MEDIA_BASE_URL` is configured, returned media URLs use that base URL.
+
+## Collection behavior
+
+- `news`, `events`, `documents`, `places`, and `useful-contacts` generate a
+  normalized slug from `title` when one is not supplied.
+- News categories are trimmed and repeated whitespace is collapsed.
+- `documents`, `events`, `places`, and `useful-contacts` limit the number of
+  featured records through the shared `limitFeatured` hook.
+- Activating a `hero-slider` automatically deactivates other active sliders.
+- `site-banners` derives its variant from the selected identifier.
+- `contact-submissions.status` defaults to `new`.
+- `contact-submissions.submittedAt` defaults to the current ISO timestamp.
+- `documents.sourceUrl` accepts only `http://` and `https://` URLs.
+
+## Example requests
+
+List published news:
+
+```text
+GET /api/news?where[isPublished][equals]=true&sort=-date&limit=10
+```
+
+Create a contact submission:
+
+```http
+POST /api/contact-submissions
+Content-Type: application/json
+```
+
+```json
 {
-"name": "Jane Doe",
-"email": "jane@example.com",
-"category": "Atividades e Eventos",
-"message": "I would like more information.",
-"consent": true,
-"sourcePage": "/contacto",
-"locale": "pt"
+  "name": "Jane Doe",
+  "email": "jane@example.com",
+  "category": "Atividades e Eventos",
+  "message": "I would like more information.",
+  "consent": true,
+  "sourcePage": "/contacto",
+  "locale": "pt"
 }
+```
 
-### 6.3 Auth: login user
+Login:
 
-Request:
+```http
+POST /api/users/login
+Content-Type: application/json
+```
 
-- POST /api/users/login
-- Content-Type: application/json
-
-Body example:
-
+```json
 {
-"email": "admin@example.com",
-"password": "your-password"
+  "email": "admin@example.com",
+  "password": "your-password"
 }
+```
 
-### 6.4 Auth: upload media
+## Cross-origin requests
 
-Request:
-
-- POST /api/media
-- Content-Type: multipart/form-data
-- Field for file content: `file`
-
-Optional metadata fields:
-
-- `alt`
-- `caption`
-
-## 7) Source of truth files (reanalyzed)
-
-- app/(payload)/api/[...slug]/route.ts
-- src/payload.config.ts
-- src/collections/Users.ts
-- src/collections/Media.ts
-- src/collections/News.ts
-- src/collections/Documents.ts
-- src/collections/ContactSubmissions.ts
-
-This document reflects the current code in those files as of the reanalysis date above.
+CORS and CSRF origins are built from `PAYLOAD_PUBLIC_SERVER_URL`, local
+development origins (`localhost`/`127.0.0.1` on ports 3000 and 3001), and
+`PAYLOAD_ALLOWED_ORIGINS`. Restrict these values to trusted origins in
+production; do not use a wildcard.
